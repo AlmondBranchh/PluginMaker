@@ -1,5 +1,6 @@
 package com.gmail.visualbukkit.ui;
 
+
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
@@ -10,4 +11,5 @@ public class ActionMenuItem extends MenuItem {
         super(text);
         setOnAction(e);
     }
+
 }

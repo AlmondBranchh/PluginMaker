@@ -128,7 +128,7 @@ public class Project {
                 new IconButton("folder", LanguageManager.get("button.resource_directory"), e -> VisualBukkitApp.openDirectory(resourcesDir)),
                 new IconButton("deploy", LanguageManager.get("button.deploy_plugin"), e -> PluginBuilder.deploy(this)),
                 new IconButton("plug", LanguageManager.get("button.extensions"), e -> extensionStage.show()));
-        buttonGrid.addColumn(1, debugModeCheckBox);
+        //buttonGrid.addColumn(1, debugModeCheckBox);
 
         pluginSettingsPane.getStyleClass().add("plugin-settings-pane");
         pluginSettingsPane.getChildren().addAll(title, pluginComponentsTree, settingsGrid, buttonGrid);
@@ -217,7 +217,7 @@ public class Project {
     protected void open() throws IOException {
         VisualBukkitApp.getSidePane().getTabs().get(1).setContent(pluginSettingsScrollPane);
         VisualBukkitApp.getSplitPane().getItems().set(1, pluginComponentPane);
-        VisualBukkitApp.getStage().setTitle("Visual Bukkit - " + getName());
+        VisualBukkitApp.getStage().setTitle("Plugin Maker - " + getName());
         DiscordRPC.discordUpdatePresence(new DiscordRichPresence
                 .Builder("Developing " + getName())
                 .setStartTimestamps(System.currentTimeMillis())

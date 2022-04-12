@@ -5,6 +5,7 @@ import com.google.common.io.MoreFiles;
 import javafx.beans.property.*;
 import javafx.scene.Parent;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.ToggleGroup;
 
@@ -69,6 +70,7 @@ public class SettingsManager {
 
         themeMenu = new Menu(LanguageManager.get("menu.themes"));
         reloadThemes();
+
 
         ToggleGroup soundsGroup = new ToggleGroup();
         RadioMenuItem enableSoundsItem = new RadioMenuItem(LanguageManager.get("menu_item.enable_sounds"));

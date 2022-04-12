@@ -15,20 +15,24 @@ import java.util.*;
 
 public class BlockSelector extends StyleableVBox {
 
-    private ObservableList<BlockSource<?>> blocks = FXCollections.observableArrayList();
-    private FilteredList<BlockSource<?>> filteredBlocks = new FilteredList<>(blocks);
+    public ObservableList<BlockSource<?>> blocks = FXCollections.observableArrayList();
+    public FilteredList<BlockSource<?>> filteredBlocks = new FilteredList<>(blocks);
     private Set<String> favPluginComponents = new HashSet<>();
     private Set<String> favStatements = new HashSet<>();
     private Set<String> favExpressions = new HashSet<>();
 
-    private CustomTextField searchField = new CustomTextField();
+    public static CustomTextField searchField = new CustomTextField();
     private CheckBox pluginComponentCheckBox = new CheckBox(LanguageManager.get("check_box.plugin_components"));
     private CheckBox statementCheckBox = new CheckBox(LanguageManager.get("check_box.statements"));
     private CheckBox expressionCheckBox = new CheckBox(LanguageManager.get("check_box.expressions"));
     private CheckBox pinnedCheckBox = new CheckBox(LanguageManager.get("check_box.favorite"));
 
+
     @SuppressWarnings("unchecked")
     public BlockSelector() {
+
+        VisualBukkitApp visualBukkitApp = new VisualBukkitApp();
+
         Label title = new Label(LanguageManager.get("label.block_selector"));
         title.setUnderline(true);
 
@@ -69,6 +73,7 @@ public class BlockSelector extends StyleableVBox {
             blocks.add(block);
             MenuItem favoriteItem = new MenuItem(LanguageManager.get("context_menu.favorite"));
             MenuItem unfavoriteItem = new MenuItem(LanguageManager.get("context_menu.unfavorite"));
+            //MenuItem hotkeyItem = new MenuItem(LanguageManager.get("context_menu.hotkey"));
             favoriteItem.setDisable(getFavorites(block).contains(block.getBlockDefinition().getID()));
             favoriteItem.setOnAction(e -> {
                 getFavorites(block).add(block.getBlockDefinition().getID());
@@ -82,6 +87,7 @@ public class BlockSelector extends StyleableVBox {
                 updateFiltered();
                 favoriteItem.setDisable(false);
             });
+
             unfavoriteItem.disableProperty().bind(favoriteItem.disableProperty().not());
             block.setContextMenu(new ContextMenu(favoriteItem, unfavoriteItem));
         }
@@ -109,4 +115,9 @@ public class BlockSelector extends StyleableVBox {
     private Set<String> getFavorites(BlockSource<?> block) {
         return block instanceof PluginComponentSource ? favPluginComponents : block instanceof StatementSource ? favStatements : favExpressions;
     }
-}
+
+    public static void updateSearchField(String hotkeyFill){
+        searchField.setText(hotkeyFill);
+    }
+    }
+

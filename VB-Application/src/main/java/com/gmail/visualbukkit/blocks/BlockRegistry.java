@@ -77,6 +77,7 @@ public class BlockRegistry {
         activeBlocks.addAll(activeStatements.values());
         activeBlocks.addAll(activeExpressions.values());
         VisualBukkitApp.getBlockSelector().setBlocks(activeBlocks);
+        VisualBukkitApp.getHotKey().setBlocks(activeBlocks);
         ExpressionSelector.setExpressions(new TreeSet<>(activeExpressions.values()));
     }
 

@@ -3,6 +3,8 @@ package com.gmail.visualbukkit;
 import com.gmail.visualbukkit.blocks.*;
 import com.gmail.visualbukkit.extensions.DefaultBlocksExtension;
 import com.gmail.visualbukkit.extensions.ExtensionManager;
+
+import com.gmail.visualbukkit.hotkey.Hotkey;
 import com.gmail.visualbukkit.project.Project;
 import com.gmail.visualbukkit.project.ProjectManager;
 import com.gmail.visualbukkit.ui.*;
@@ -27,6 +29,7 @@ import javafx.util.Duration;
 import net.arikia.dev.drpc.DiscordEventHandlers;
 import net.arikia.dev.drpc.DiscordRPC;
 import net.arikia.dev.drpc.DiscordRichPresence;
+import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,7 +39,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,9 +51,10 @@ public class VisualBukkitApp extends Application {
     private static VisualBukkitLogger logger;
     private static VisualBukkitServer server;
     private static SettingsManager settingsManager;
+    private static TutorialManager tutorialManager;
 
     private static ExecutorService executorService = Executors.newCachedThreadPool();
-    private static Path dataDir = Paths.get(System.getProperty("user.home"), "VisualBukkit5");
+    private static Path dataDir = Paths.get(System.getProperty("user.home"), "PluginMaker");
     private static Path dataFile = dataDir.resolve("data.json");
     private static JSONObject data;
     private static Timeline autosaveTimeline;
@@ -63,6 +66,10 @@ public class VisualBukkitApp extends Application {
     private static Scene scene = new Scene(rootPane, 750, 500);
     private static Stage stage;
     private static BlockSelector blockSelector;
+    private static Hotkey hotkey;
+
+    public String hotkeyFill = null;
+
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -91,6 +98,8 @@ public class VisualBukkitApp extends Application {
         settingsManager.bindStyle(logger.getTextArea());
         settingsManager.bindStyle(rootPane);
 
+        tutorialManager = new TutorialManager();
+
         rootPane.setTop(createMenuBar());
         rootPane.setCenter(splitPane);
 
@@ -100,8 +109,11 @@ public class VisualBukkitApp extends Application {
         sidePane.setSide(Side.LEFT);
         sidePane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         sidePane.getTabs().addAll(
-                new Tab(LanguageManager.get("label.block_selector"), blockSelector = new BlockSelector()),
-                new Tab(LanguageManager.get("label.plugin_settings")));
+                new Tab(LanguageManager.get("label.block_selector"),blockSelector = new BlockSelector()),
+                new Tab(LanguageManager.get("label.plugin_settings")),
+                new Tab("Hot Key", hotkey = new Hotkey())
+                );
+        sidePane.setTabMinHeight(25);
 
         sidePane.setOnDragOver(e -> {
             Object source = e.getGestureSource();
@@ -122,19 +134,11 @@ public class VisualBukkitApp extends Application {
             }
         });
 
-        scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-            if (e.isShortcutDown() && e.getCode() == KeyCode.S) {
-                e.consume();
-                try {
-                    saveCurrentProject();
-                    NotificationManager.displayMessage(LanguageManager.get("message.saved.title"), LanguageManager.get("message.saved.content"));
-                } catch (IOException ex) {
-                    NotificationManager.displayException("Failed to save", ex);
-                }
-            }
-        });
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, this::handle);
 
-        try (InputStream iconInputStream = VisualBukkitApp.class.getResourceAsStream("/images/icon.png");
+
+
+        try (InputStream iconInputStream = VisualBukkitApp.class.getResourceAsStream("/images/new_icon.png");
              InputStream bukkitBlocksInputStream = VisualBukkitApp.class.getResourceAsStream("/blocks/BukkitBlocks.json");
              InputStream javaBlocksInputStream = VisualBukkitApp.class.getResourceAsStream("/blocks/JavaBlocks.json")) {
             stage.getIcons().add(new Image(iconInputStream));
@@ -147,7 +151,7 @@ public class VisualBukkitApp extends Application {
         System.out.println("Loading extensions...");
         ExtensionManager.loadExtensions();
 
-        stage.setTitle("Visual Bukkit");
+        stage.setTitle("Plugin Maker");
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.show();
@@ -161,12 +165,13 @@ public class VisualBukkitApp extends Application {
             }
         });
 
-        Platform.runLater(this::isUpdateAvailable);
+        //Platform.runLater(this::isUpdateAvailable);
     }
 
     @Override
     public void stop() throws IOException {
         System.out.println("Shutting down...");
+
 
         if (ProjectManager.getCurrentProject() != null) {
             data.put("last-project", ProjectManager.getCurrentProject().getName());
@@ -229,11 +234,11 @@ public class VisualBukkitApp extends Application {
                             });
                         }),
                         new SeparatorMenuItem(),
-                        new ActionMenuItem(LanguageManager.get("menu_item.check_update"), e -> {
+                        /*new ActionMenuItem(LanguageManager.get("menu_item.check_update"), e -> {
                             if (!isUpdateAvailable()) {
                                 NotificationManager.displayMessage(LanguageManager.get("message.no_update.title"), LanguageManager.get("message.no_update.content"));
                             }
-                        }),
+                        }),*/
                         new ActionMenuItem(LanguageManager.get("menu_item.log"), e -> logger.show())),
                 new Menu(LanguageManager.get("menu.edit"), null,
                         new ActionMenuItem(LanguageManager.get("menu_item.undo"), e -> UndoManager.undo()),
@@ -245,10 +250,15 @@ public class VisualBukkitApp extends Application {
                         }),
                         new ActionMenuItem(LanguageManager.get("menu_item.extension_help"), e -> openURI(URI.create("https://github.com/OfficialDonut/VisualBukkit/wiki/Extensions")))),
                 settingsManager.createMenu(),
-                new Menu(LanguageManager.get("menu.help"), null,
-                        new ActionMenuItem("Github", e -> openURI(URI.create("https://github.com/OfficialDonut/VisualBukkit"))),
-                        new ActionMenuItem("Spigot", e -> openURI(URI.create("https://www.spigotmc.org/resources/visual-bukkit-create-plugins.76474/"))),
-                        new ActionMenuItem("Discord", e -> openURI(URI.create("https://discord.gg/ugkvGpu")))));
+                //new Menu(LanguageManager.get("menu.help"), null,
+                        //new ActionMenuItem("Spigot", e -> openURI(URI.create("https://www.spigotmc.org/resources/visual-bukkit-create-plugins.76474/"))),
+                        //new ActionMenuItem("Discord", e -> openURI(URI.create("https://discord.gg/ugkvGpu")))),
+                tutorialManager.CreateTutorialMenu());
+
+
+
+
+
     }
 
     public static void saveCurrentProject() throws IOException {
@@ -286,25 +296,21 @@ public class VisualBukkitApp extends Application {
     }
 
     public static void openDirectory(Path dir) {
-        if (Files.notExists(dir)) {
-            try {
-                Files.createDirectories(dir);
-            } catch (IOException e) {
-                NotificationManager.displayException("Failed to open directory", e);
-                return;
-            }
-        }
         try {
-            Desktop.getDesktop().browse(dir.toUri());
-        } catch (Exception e1) {
-            try {
-                Runtime.getRuntime().exec(new String[]{"xdg-open", dir.toUri().toString()});
-            } catch (IOException e2) {
-                NotificationManager.displayError("Error", "Action not supported by your OS");
+            if (Files.notExists(dir)) {
+                Files.createDirectories(dir);
             }
+            if (SystemUtils.IS_OS_LINUX) {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", dir.toUri().toString()});
+            } else {
+                Desktop.getDesktop().browse(dir.toUri());
+            }
+        } catch (IOException e) {
+            NotificationManager.displayException("Failed to open directory", e);
         }
     }
 
+    /* This is the Visual Bukkit Updater
     public boolean isUpdateAvailable() {
         try (InputStream inputStream = new URL("https://api.github.com/repos/OfficialDonut/VisualBukkit/releases/latest").openStream()) {
             JSONObject response = new JSONObject(new JSONTokener(inputStream));
@@ -326,7 +332,7 @@ public class VisualBukkitApp extends Application {
         } catch (Exception ignored) {}
         return false;
     }
-
+    */
     public static VisualBukkitLogger getLogger() {
         return logger;
     }
@@ -338,6 +344,7 @@ public class VisualBukkitApp extends Application {
     public static SettingsManager getSettingsManager() {
         return settingsManager;
     }
+
 
     public static ExecutorService getExecutorService() {
         return executorService;
@@ -373,5 +380,31 @@ public class VisualBukkitApp extends Application {
 
     public static BlockSelector getBlockSelector() {
         return blockSelector;
+    }
+
+    public static Hotkey getHotKey() {return hotkey;}
+
+    private void handle(KeyEvent e) {
+        if (e.isShortcutDown() && e.getCode() == KeyCode.S) {
+            e.consume();
+            try {
+                saveCurrentProject();
+                NotificationManager.displayMessage(LanguageManager.get("message.saved.title"), LanguageManager.get("message.saved.content"));
+            } catch (IOException ex) {
+                NotificationManager.displayException("Failed to save", ex);
+            }
+        }
+        String name = e.getText();
+        String hotkeyPressed = name + "+" + e.isControlDown() + "+" + e.isShiftDown();
+
+        JSONArray array = VisualBukkitApp.getData().getJSONArray("HotKey");
+        for (int n = 0; n < array.length(); n++) {
+            JSONObject jsonObject = array.getJSONObject(n);
+            if (jsonObject.has(hotkeyPressed)) {
+                hotkeyFill = jsonObject.getString(hotkeyPressed);
+                BlockSelector.updateSearchField(hotkeyFill);
+
+            }
+        }
     }
 }

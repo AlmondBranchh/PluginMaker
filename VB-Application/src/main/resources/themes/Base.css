@@ -35,7 +35,7 @@
 }
 
 .block .text-field {
-    -fx-control-inner-background: lightgray;
+    -fx-control-inner-background: white;
     -fx-text-fill: black;
 }
 
@@ -375,10 +375,29 @@
 }
 
 .tree-node {
-    -fx-spacing: 5;
+    -fx-spacing: 3;
 }
 
 .tree-node > .vbox {
-    -fx-padding: 0 0 0 10;
-    -fx-spacing: 5;
+    -fx-padding: 0 0 0 7;
+    -fx-spacing: 3;
+}
+
+.hotkey {
+    -fx-border-color: black;
+    -fx-border-width: 0 0 0 1;
+     -fx-spacing: 10;
+    }
+.hotkey > .list-view{
+    -fx-selection-bar: transparent;
+}
+
+.hotkey > .hbox{
+    -fx-spacing: 10;
+}
+
+.hotkey > .vbox {
+    -fx-padding: 10;
+    -fx-spacing: 10;
+
 }

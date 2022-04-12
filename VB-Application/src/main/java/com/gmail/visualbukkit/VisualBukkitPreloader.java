@@ -23,12 +23,12 @@ public class VisualBukkitPreloader extends Preloader {
     @Override
     public void start(Stage stage) throws IOException {
         this.stage = stage;
-        try (InputStream inputStream = VisualBukkitApp.class.getResourceAsStream("/images/icon.png")) {
+        try (InputStream inputStream = VisualBukkitApp.class.getResourceAsStream("/images/new_icon.png")) {
             Image icon = new Image(inputStream);
             ImageView imageView = new ImageView(icon);
             imageView.setFitWidth(250);
             imageView.setFitHeight(250);
-            Label label = new Label("Visual Bukkit");
+            Label label = new Label("Plugin Maker");
             label.setFont(Font.loadFont(VisualBukkitPreloader.class.getResource("/fonts/JetBrainsMono-Bold.ttf").toExternalForm(), 48));
             label.setTextFill(Color.WHITE);
             VBox rootPane = new VBox(20, label, imageView);

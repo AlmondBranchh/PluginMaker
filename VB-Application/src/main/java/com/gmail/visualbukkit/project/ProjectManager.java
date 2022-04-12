@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 public class ProjectManager {
 
-    private static Path projectsDir = VisualBukkitApp.getDataDir().resolve("Projects");
+    public static Path projectsDir = VisualBukkitApp.getDataDir().resolve("Projects");
     private static Project currentProject;
 
     public static void openLast() {
